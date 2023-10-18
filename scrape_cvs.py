@@ -48,7 +48,7 @@ def get_session(download_dir="",headless=False):
     options.add_argument("--log-level=3")
     # remove automated control message
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    driver = webdriver.Chrome(chrome_options=options, executable_path="chromedriver.exe")
+    driver = webdriver.Chrome(options=options, executable_path="chromedriver.exe")
     return driver
 
 def get_all_jobs(driver:webdriver.Chrome):
