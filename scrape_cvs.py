@@ -145,6 +145,11 @@ def get_session(name:str):
     return page
 
 
+def split_list(l, n):
+    k, m = divmod(len(l), n)
+    return (l[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))
+
+
 if __name__ == "__main__":
     to_include = input("Enter date to include in format dd-mm-yy: ")
     page = get_session("browser_main")
@@ -156,17 +161,7 @@ if __name__ == "__main__":
         try:os.mkdir(name)
         except:pass
         # now split profiles into 4 parts, it can be odd or even so add all extra to the last one
-        list_1, list_2, list_3, list_4 = [], [], [], []
-        for i, profile in enumerate(profiles):
-            if i % 4 == 0:
-                list_1.append(profile)
-            elif i % 4 == 1:
-                list_2.append(profile)
-            elif i % 4 == 2:
-                list_3.append(profile)
-            else:
-                list_4.append(profile)
-        profiles = [list_1, list_2, list_3, list_4]
+        profiles = list(split_list(profiles, 4))
         # now download all cvs
         threads = []
         for i in profiles:
