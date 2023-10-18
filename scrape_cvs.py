@@ -4,6 +4,8 @@ import os
 import time
 import datetime
 import multiprocessing
+# from the selenium librabry import the service module
+from selenium.webdriver.chrome.service import Service
 
 login_url = "https://hiring.naukri.com/hiring/job-listing"
 # if not available then create a config file
@@ -34,21 +36,23 @@ def login_if_needed(driver:webdriver.Chrome, login_url:str, login_id:str, passwd
     time.sleep(4)
 
 
-def get_session(download_dir="",headless=False):
+def get_session(download_dir=""):
     # create a new Chrome session ans store it in a directory
     options = webdriver.ChromeOptions()
     options.add_argument("--start-maximized")
-    if headless:
-        options.add_argument("--headless")
+    options.add_argument("--disable-notifications")
+    options.add_argument("--disable-popup-blocking")
+    options.add_argument("--disable-extensions")
     # set error log to 3
     if len(download_dir) != 0:  
         path = os.getcwd()
         prefs = {"download.default_directory" : os.path.join(path, download_dir)}
         options.add_experimental_option("prefs",prefs)
     options.add_argument("--log-level=3")
+    options.add_experimental_option('useAutomationExtension', False)
     # remove automated control message
     options.add_experimental_option("excludeSwitches", ["enable-automation"])
-    driver = webdriver.Chrome(options=options, executable_path="chromedriver.exe")
+    driver = webdriver.Chrome(options=options, service=Service("chromedriver.exe"))
     return driver
 
 def get_all_jobs(driver:webdriver.Chrome):
