@@ -128,33 +128,35 @@ def download_cvs(profiles, name,b_name:int):
         with open("current_link.txt", "r") as f:
             if link in f.read():
                 continue
-        
-        new_session.goto(link, timeout=5000)
-        max_tries = 5
-        to_refresh = 5
-        while True: 
-            time.sleep(1)
-            # check if the download button is available
-            if new_session.query_selector('i[class="oreFontIcons ore-download icon"]') == None:
-                to_refresh -= 1
-                if to_refresh == 0:
-                    new_session.reload()
-                    to_refresh = 5
-                    max_tries -= 2
-                continue
-            if max_tries <= 0:
-                break
-            try:
-                with new_session.expect_download(timeout=5000) as download_info:
-                    new_session.click('i[class="oreFontIcons ore-download icon"]')
-                download = download_info.value
-                download.save_as(f"{name}/{download.suggested_filename}")
-                with open("current_link.txt", "a") as f:
-                    f.write(f"{link}\n")
-                break
-            except:
-                max_tries -= 1
-                continue
+        try:
+            new_session.goto(link, timeout=5000)
+            max_tries = 5
+            to_refresh = 5
+            while True: 
+                time.sleep(1)
+                # check if the download button is available
+                if new_session.query_selector('i[class="oreFontIcons ore-download icon"]') == None:
+                    to_refresh -= 1
+                    if to_refresh == 0:
+                        new_session.reload()
+                        to_refresh = 5
+                        max_tries -= 2
+                    continue
+                if max_tries <= 0:
+                    break
+                try:
+                    with new_session.expect_download(timeout=5000) as download_info:
+                        new_session.click('i[class="oreFontIcons ore-download icon"]')
+                    download = download_info.value
+                    download.save_as(f"{name}/{download.suggested_filename}")
+                    with open("current_link.txt", "a") as f:
+                        f.write(f"{link}\n")
+                    break
+                except:
+                    max_tries -= 1
+                    continue
+        except:
+            continue
     new_session.close()
     time.sleep(2)
     # delete the folder
