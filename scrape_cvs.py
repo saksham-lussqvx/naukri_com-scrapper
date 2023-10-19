@@ -132,7 +132,7 @@ def download_cvs(profiles, name,b_name:int):
             if max_tries == 0:
                 break
             try:
-                with new_session.expect_download() as download_info:
+                with new_session.expect_download(timeout=5) as download_info:
                     new_session.click('i[class="oreFontIcons ore-download icon"]')
                 download = download_info.value
                 download.save_as(f"{name}/{download.suggested_filename}")
@@ -143,14 +143,15 @@ def download_cvs(profiles, name,b_name:int):
     new_session.close()
     time.sleep(2)
     # delete the folder
-    shutil.rmtree(f"{b_name}")
+    path = os.path.join(os.getcwd(), f"{b_name}")
+    shutil.rmtree(f"{path}")
 
 def get_session(name:str):
     # create a new Chrome session ans store it in a directory
     p = sync_playwright().start()
     path = os.path.join(os.getcwd(), name)
 
-    browser = p.chromium.launch_persistent_context(path, headless=False,args=['--window-size=1920,1040'], no_viewport=True)
+    browser = p.chromium.launch_persistent_context(path, headless=False,args=['--start-maximized'], viewport={"width": 1920, "height": 1080})
     page = browser.new_page()
     stealth_sync(page)
     return page
@@ -171,15 +172,13 @@ if __name__ == "__main__":
     login_if_needed(page, login_url, login_id, passwd)
     all_jobs, names = get_all_jobs(page)
     for job, name in zip(all_jobs, names):
-        if name != "IT Recruiter Remote":
-            continue
         # create a folder of the job
         profiles = get_all_people(to_include, page, job)
         print(len(profiles))
         try:os.mkdir(name)
         except:pass
         # now split profiles into 4 parts, it can be odd or even so add all extra to the last one
-        profiles = list(split_list(profiles, 4))
+        profiles = [list(split_list(profiles, 4))]
         # now download all cvs
         threads = []
         for i in profiles:
@@ -190,6 +189,7 @@ if __name__ == "__main__":
             t.join()
     page.close()
     time.sleep(2)
-    # delete the browser_main folder, windows
-    shutil.rmtree("browser_main")
+    # delete the folder
+    path = os.path.join(os.getcwd(), "browser_main")
+    shutil.rmtree(f"{path}")
     print("All done")
