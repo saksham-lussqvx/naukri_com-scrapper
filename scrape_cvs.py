@@ -129,14 +129,23 @@ def download_cvs(profiles, name,b_name:int):
             if link in f.read():
                 continue
         
-        new_session.goto(link)
+        new_session.goto(link, timeout=5000)
         max_tries = 5
+        to_refresh = 5
         while True: 
             time.sleep(1)
-            if max_tries == 0:
+            # check if the download button is available
+            if new_session.query_selector('i[class="oreFontIcons ore-download icon"]') == None:
+                to_refresh -= 1
+                if to_refresh == 0:
+                    new_session.reload()
+                    to_refresh = 5
+                    max_tries -= 2
+                continue
+            if max_tries <= 0:
                 break
             try:
-                with new_session.expect_download(timeout=7000) as download_info:
+                with new_session.expect_download(timeout=5000) as download_info:
                     new_session.click('i[class="oreFontIcons ore-download icon"]')
                 download = download_info.value
                 download.save_as(f"{name}/{download.suggested_filename}")
@@ -157,8 +166,8 @@ def get_session(name:str):
     p = sync_playwright().start()
     path = os.path.join(os.getcwd(), name)
 
-    browser = p.chromium.launch_persistent_context(path, headless=False,args=['--start-maximized'], viewport={"width": 1920, "height": 1080})
-    page = browser.new_page()
+    browser = p.chromium.launch_persistent_context(path, headless=False,args=['--window-size=1920,1080'], viewport={"width": 1920, "height": 1080})
+    page = browser.pages[0]
     stealth_sync(page)
     return page
 
@@ -186,8 +195,9 @@ if __name__ == "__main__":
         except:pass
         # now split profiles into 4 parts, it can be odd or even so add all extra to the last one
         profiles = list(split_list(profiles, 4))
-        with open("current_link.txt", "w") as f:
-            f.write("")
+        if os.path.exists("current_link.txt") == False:
+            with open("current_link.txt", "w") as f:
+                f.write("")
         # now download all cvs
         threads = []
         for i in profiles:
