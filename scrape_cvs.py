@@ -1,7 +1,9 @@
 from playwright.sync_api import sync_playwright
+from playwright_stealth import stealth_sync
 import os
 import time
 import datetime
+import shutil
 import multiprocessing
 
 login_url = "https://hiring.naukri.com/hiring/job-listing"
@@ -49,8 +51,10 @@ def get_all_jobs(page):
     time.sleep(1)
     # click on id=mjrSearchBtn
     page.click("id=mjrSearchBtn")
-    time.sleep(2)
+    time.sleep(3)
+    page.evaluate("window.scrollTo(0, document.body.scrollHeight);")
     # get all class="mjrTupleTitle ellipsis"
+    time.sleep(2)
     elements = page.query_selector_all('a[class="mjrTupleTitle ellipsis"]')
     links = []
     names = []
@@ -88,7 +92,7 @@ def get_all_people(date_to_include, page, link):
         time.sleep(1)
         for i in range(1, 30):
             page.evaluate("window.scrollTo(0, document.body.scrollHeight/30*{})".format(i))
-            time.sleep(0.2)
+            time.sleep(0.4)
         time.sleep(2)
         all_people = page.query_selector_all('a[class="candidate-name"]')
         for person in all_people:
@@ -137,11 +141,18 @@ def download_cvs(profiles, name,b_name:int):
                 max_tries -= 1
                 continue
     new_session.close()
+    time.sleep(2)
+    # delete the folder
+    shutil.rmtree(f"{b_name}")
+
 def get_session(name:str):
     # create a new Chrome session ans store it in a directory
     p = sync_playwright().start()
-    browser = p.chromium.launch_persistent_context(name, headless=False,args=["--start-maximised"], no_viewport=True)
+    path = os.path.join(os.getcwd(), name)
+
+    browser = p.chromium.launch_persistent_context(path, headless=False,args=['--window-size=1920,1040'], no_viewport=True)
     page = browser.new_page()
+    stealth_sync(page)
     return page
 
 
@@ -152,12 +163,19 @@ def split_list(l, n):
 
 if __name__ == "__main__":
     to_include = input("Enter date to include in format dd-mm-yy: ")
+    try:
+        shutil.rmtree("browser_main")
+    except:
+        pass
     page = get_session("browser_main")
     login_if_needed(page, login_url, login_id, passwd)
     all_jobs, names = get_all_jobs(page)
     for job, name in zip(all_jobs, names):
+        if name != "IT Recruiter Remote":
+            continue
         # create a folder of the job
         profiles = get_all_people(to_include, page, job)
+        print(len(profiles))
         try:os.mkdir(name)
         except:pass
         # now split profiles into 4 parts, it can be odd or even so add all extra to the last one
@@ -171,4 +189,7 @@ if __name__ == "__main__":
         for t in threads:
             t.join()
     page.close()
+    time.sleep(2)
+    # delete the browser_main folder, windows
+    shutil.rmtree("browser_main")
     print("All done")
