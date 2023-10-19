@@ -125,17 +125,23 @@ def download_cvs(profiles, name,b_name:int):
     new_session = get_session(f"{b_name}")
     login_if_needed(new_session, login_url, login_id, passwd)
     for link in profiles:
+        with open("current_link.txt", "r") as f:
+            if link in f.read():
+                continue
+        
         new_session.goto(link)
         max_tries = 5
-        while True:
+        while True: 
             time.sleep(1)
             if max_tries == 0:
                 break
             try:
-                with new_session.expect_download(timeout=5) as download_info:
+                with new_session.expect_download(timeout=7000) as download_info:
                     new_session.click('i[class="oreFontIcons ore-download icon"]')
                 download = download_info.value
                 download.save_as(f"{name}/{download.suggested_filename}")
+                with open("current_link.txt", "a") as f:
+                    f.write(f"{link}\n")
                 break
             except:
                 max_tries -= 1
@@ -174,11 +180,14 @@ if __name__ == "__main__":
     for job, name in zip(all_jobs, names):
         # create a folder of the job
         profiles = get_all_people(to_include, page, job)
+        # save in a txt file 
         print(len(profiles))
         try:os.mkdir(name)
         except:pass
         # now split profiles into 4 parts, it can be odd or even so add all extra to the last one
-        profiles = [list(split_list(profiles, 4))]
+        profiles = list(split_list(profiles, 4))
+        with open("current_link.txt", "w") as f:
+            f.write("")
         # now download all cvs
         threads = []
         for i in profiles:
@@ -192,4 +201,6 @@ if __name__ == "__main__":
     # delete the folder
     path = os.path.join(os.getcwd(), "browser_main")
     shutil.rmtree(f"{path}")
+    os.remove("current_link.txt")
     print("All done")
+
