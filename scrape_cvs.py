@@ -65,25 +65,31 @@ def get_all_jobs(page):
 
 def get_all_people(date_to_include, page, link):
     link = f"https://hiring.naukri.com{link}"
-    page.goto(link)
-    # click class=label-count
-    time.sleep(3)
-    m = page.query_selector('div[class="badges-container"]')
-    # under m get all divs and click on the first one 
-    m.query_selector_all('div')[0].click()
-    time.sleep(2)
-    #span class="sel-text"
-    page.click('span[class="sel-text"]')
-    time.sleep(2)
-    # find dropdown-options show-count-options
-    e = page.query_selector('div[class="dropdown-options show-count-options"]')
-    # find all li
-    all_li = e.query_selector_all('li')
-    # click the second one
-    all_li[1].click()
-    # scroll to the bottom of the page
-    time.sleep(2)
-    num = int(page.query_selector('span[class="page-value"]').text_content().split(" ")[-1])
+    while True:
+        try:
+            page.goto(link)
+            # click class=label-count
+            time.sleep(3)
+            m = page.query_selector('div[class="badges-container"]')
+            # under m get all divs and click on the first one 
+            m.query_selector_all('div')[0].click()
+            time.sleep(2)
+            #span class="sel-text"
+            page.click('span[class="sel-text"]')
+            time.sleep(2)
+            # find dropdown-options show-count-options
+            e = page.query_selector('div[class="dropdown-options show-count-options"]')
+            # find all li
+            all_li = e.query_selector_all('li')
+            # click the second one
+            all_li[1].click()
+            # scroll to the bottom of the page
+            time.sleep(2)
+            num = int(page.query_selector('span[class="page-value"]').text_content().split(" ")[-1])
+            break
+        except Exception as e:
+            print(e)
+            continue
     profiles = []
     dates = []
     while True:
@@ -96,7 +102,7 @@ def get_all_people(date_to_include, page, link):
         time.sleep(2)
         all_people = page.query_selector_all('a[class="candidate-name"]')
         for person in all_people:
-            profiles.append(person.get_attribute("href"))
+            profiles.append(person.get_attribute("href").split("?")[0])
         # get all class="flex-row flex-aic item"
         all_dates = page.query_selector_all('span[class="flex-row flex-aic item"]')
         for d in all_dates:
@@ -182,13 +188,19 @@ def split_list(l, n):
 if __name__ == "__main__":
     to_include = input("Enter date to include in format dd-mm-yy: ")
     try:
-        shutil.rmtree("browser_main")
+        path = os.path.join(os.getcwd(), "browser_main")
+        shutil.rmtree(f"{path}")
     except:
         pass
     page = get_session("browser_main")
     login_if_needed(page, login_url, login_id, passwd)
     all_jobs, names = get_all_jobs(page)
+    if os.path.exists("main_links.txt") == False:
+        with open("main_links.txt", "w") as f:
+            f.write("")
     for job, name in zip(all_jobs, names):
+        if job in open("main_links.txt", "r").read():
+            continue
         # create a folder of the job
         profiles = get_all_people(to_include, page, job)
         # save in a txt file 
@@ -200,6 +212,7 @@ if __name__ == "__main__":
         if os.path.exists("current_link.txt") == False:
             with open("current_link.txt", "w") as f:
                 f.write("")
+        
         # now download all cvs
         threads = []
         for i in profiles:
@@ -208,11 +221,14 @@ if __name__ == "__main__":
             t.start()
         for t in threads:
             t.join()
+        # now append the link to main_links.txt
+        with open("main_links.txt", "a") as f:
+            f.write(f"{job}\n")
     page.close()
     time.sleep(2)
     # delete the folder
     path = os.path.join(os.getcwd(), "browser_main")
     shutil.rmtree(f"{path}")
     os.remove("current_link.txt")
+    os.remove("main_links.txt")
     print("All done")
-
