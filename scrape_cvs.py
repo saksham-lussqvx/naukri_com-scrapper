@@ -229,6 +229,5 @@ if __name__ == "__main__":
     # delete the folder
     path = os.path.join(os.getcwd(), "browser_main")
     shutil.rmtree(f"{path}")
-    os.remove("current_link.txt")
     os.remove("main_links.txt")
     print("All done")
