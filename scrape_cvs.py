@@ -99,7 +99,7 @@ def get_all_people(date_to_include, page, link):
     max_tries = 5
     while True:
         if max_tries == 0:
-            return []
+            break
         try:
             page.evaluate("window.scrollTo(0, document.body.scrollHeight);")
             # now scroll back up slowly to the top
@@ -216,6 +216,8 @@ if __name__ == "__main__":
             continue
         # create a folder of the job
         profiles = get_all_people(to_include, page, job)
+        if len(profiles) == 0:
+            continue
         # save in a txt file 
         print(len(profiles))
         try:os.mkdir(name)
