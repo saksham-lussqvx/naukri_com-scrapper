@@ -65,9 +65,12 @@ def get_all_jobs(page):
 
 def get_all_people(date_to_include, page, link):
     link = f"https://hiring.naukri.com{link}"
+    max_tries = 5
     while True:
+        if max_tries == 0:
+            return []
         try:
-            page.goto(link)
+            page.goto(link, timeout=10000)
             # click class=label-count
             time.sleep(3)
             m = page.query_selector('div[class="badges-container"]')
@@ -88,36 +91,45 @@ def get_all_people(date_to_include, page, link):
             num = int(page.query_selector('span[class="page-value"]').text_content().split(" ")[-1])
             break
         except Exception as e:
+            max_tries -= 1
             print(e)
             continue
     profiles = []
     dates = []
+    max_tries = 5
     while True:
-        page.evaluate("window.scrollTo(0, document.body.scrollHeight);")
-        # now scroll back up slowly to the top
-        time.sleep(1)
-        for i in range(1, 30):
-            page.evaluate("window.scrollTo(0, document.body.scrollHeight/30*{})".format(i))
-            time.sleep(0.4)
-        time.sleep(2)
-        all_people = page.query_selector_all('a[class="candidate-name"]')
-        for person in all_people:
-            profiles.append(person.get_attribute("href").split("?")[0])
-        # get all class="flex-row flex-aic item"
-        all_dates = page.query_selector_all('span[class="flex-row flex-aic item"]')
-        for d in all_dates:
-            d = d.text_content().split("Applied on: ")[-1].strip()
-            d = datetime.datetime.strptime(d, "%d %b %y").strftime("%d-%m-%y")
-            dates.append(d)
-        num -= 1
-        if num == 0:
-            break
-        page.click('i[class="oreFontIcons ore-arrow_down ico ico-expand next "]')
-        time.sleep(2)
-        # check if last date is less than date_to_include, if it is then break
-        if len(date_to_include) != 0:
-            if dates[-1] < date_to_include:
+        if max_tries == 0:
+            return []
+        try:
+            page.evaluate("window.scrollTo(0, document.body.scrollHeight);")
+            # now scroll back up slowly to the top
+            time.sleep(1)
+            for i in range(1, 30):
+                page.evaluate("window.scrollTo(0, document.body.scrollHeight/30*{})".format(i))
+                time.sleep(0.4)
+            time.sleep(2)
+            all_people = page.query_selector_all('a[class="candidate-name"]')
+            for person in all_people:
+                profiles.append(person.get_attribute("href").split("?")[0])
+            # get all class="flex-row flex-aic item"
+            all_dates = page.query_selector_all('span[class="flex-row flex-aic item"]')
+            for d in all_dates:
+                d = d.text_content().split("Applied on: ")[-1].strip()
+                d = datetime.datetime.strptime(d, "%d %b %y").strftime("%d-%m-%y")
+                dates.append(d)
+            num -= 1
+            if num == 0:
                 break
+            page.click('i[class="oreFontIcons ore-arrow_down ico ico-expand next "]')
+            time.sleep(2)
+            # check if last date is less than date_to_include, if it is then break
+            if len(date_to_include) != 0:
+                if dates[-1] < date_to_include:
+                    break
+        except Exception as e:
+            max_tries -= 1
+            print(e)
+            continue
     # remove all profiles that are not in date_to_include
     final_dates = []
     final_profiles = []
@@ -135,7 +147,7 @@ def download_cvs(profiles, name,b_name:int):
             if link in f.read():
                 continue
         try:
-            new_session.goto(link, timeout=5000)
+            new_session.goto(link, timeout=7000)
             max_tries = 5
             to_refresh = 5
             while True: 
