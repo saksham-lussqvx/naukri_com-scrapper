@@ -101,6 +101,8 @@ def get_all_people(date_to_include, page, link):
     while True:
         if max_tries == 0:
             main_tries -= 1
+            page.reload()
+            time.sleep(3)
             if main_tries == 0:
                 break
             max_tries = 5
