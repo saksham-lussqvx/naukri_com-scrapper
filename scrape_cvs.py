@@ -97,9 +97,14 @@ def get_all_people(date_to_include, page, link):
     profiles = []
     dates = []
     max_tries = 5
+    main_tries = 3
     while True:
         if max_tries == 0:
-            break
+            main_tries -= 1
+            if main_tries == 0:
+                break
+            max_tries = 5
+            continue
         try:
             page.evaluate("window.scrollTo(0, document.body.scrollHeight);")
             # now scroll back up slowly to the top
