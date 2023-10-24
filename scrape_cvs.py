@@ -218,7 +218,8 @@ if __name__ == "__main__":
     if os.path.exists("main_links.txt") == False:
         with open("main_links.txt", "w") as f:
             f.write("")
-    for job, name in zip(all_jobs, names):
+    for job, name in zip(all_jobs[4:], names[4:]):
+        login_if_needed(page, login_url, login_id, passwd)
         if job in open("main_links.txt", "r").read():
             continue
         # create a folder of the job
