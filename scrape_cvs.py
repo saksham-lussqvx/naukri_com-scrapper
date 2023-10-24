@@ -128,6 +128,7 @@ def get_all_people(date_to_include, page, link):
                     break
         except Exception as e:
             max_tries -= 1
+            time.sleep(2)
             print(e)
             continue
     # remove all profiles that are not in date_to_include
