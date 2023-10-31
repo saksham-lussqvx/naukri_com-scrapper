@@ -207,6 +207,7 @@ def split_list(l, n):
 
 if __name__ == "__main__":
     to_include = input("Enter date to include in format dd-mm-yy: ")
+    chromes = input("Enter number of chrome instances to open: ")
     try:
         path = os.path.join(os.getcwd(), "browser_main")
         shutil.rmtree(f"{path}")
@@ -215,13 +216,8 @@ if __name__ == "__main__":
     page = get_session("browser_main")
     login_if_needed(page, login_url, login_id, passwd)
     all_jobs, names = get_all_jobs(page)
-    if os.path.exists("main_links.txt") == False:
-        with open("main_links.txt", "w") as f:
-            f.write("")
-    for job, name in zip(all_jobs[4:], names[4:]):
+    for job, name in zip(all_jobs, names):
         login_if_needed(page, login_url, login_id, passwd)
-        if job in open("main_links.txt", "r").read():
-            continue
         # create a folder of the job
         profiles = get_all_people(to_include, page, job)
         if len(profiles) == 0:
@@ -231,7 +227,7 @@ if __name__ == "__main__":
         try:os.mkdir(name)
         except:pass
         # now split profiles into 4 parts, it can be odd or even so add all extra to the last one
-        profiles = list(split_list(profiles, 4))
+        profiles = list(split_list(profiles, int(chromes)))
         if os.path.exists("current_link.txt") == False:
             with open("current_link.txt", "w") as f:
                 f.write("")
@@ -244,13 +240,9 @@ if __name__ == "__main__":
             t.start()
         for t in threads:
             t.join()
-        # now append the link to main_links.txt
-        with open("main_links.txt", "a") as f:
-            f.write(f"{job}\n")
     page.close()
     time.sleep(2)
     # delete the folder
     path = os.path.join(os.getcwd(), "browser_main")
     shutil.rmtree(f"{path}")
-    os.remove("main_links.txt")
     print("All done")
