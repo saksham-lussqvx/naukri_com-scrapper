@@ -131,6 +131,7 @@ def get_all_people(date_to_include, page, link):
             time.sleep(2)
             # check if last date is less than date_to_include, if it is then break
             if len(date_to_include) != 0:
+                # if the date is less than date_to_include then break
                 if dates[-1] < date_to_include:
                     break
         except Exception as e:
@@ -142,9 +143,13 @@ def get_all_people(date_to_include, page, link):
     final_dates = []
     final_profiles = []
     for d, p in zip(dates, profiles):
-        if d >= date_to_include:
-            final_dates.append(d)
-            final_profiles.append(p)
+        # match the date and if it is less than date_to_include then break
+        if len(date_to_include) != 0:
+            if d < date_to_include:
+                break
+            else:
+                final_dates.append(d)
+                final_profiles.append(p)
     return final_profiles
 
 def download_cvs(profiles, name,b_name:int):
